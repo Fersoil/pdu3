@@ -1,4 +1,4 @@
-# Pocz¹tkowo wczytamy sobie troche danych
+# Pocz?tkowo wczytamy sobie troche danych
 # 
 # 
 #
@@ -14,9 +14,6 @@ library(rstudioapi)
 # wczytywanie
 setwd(dirname(getActiveDocumentContext()$path)) 
 getwd()
-
-merge(x.by="Id")
-
 
 options(stringsAsFactors = FALSE)
 
