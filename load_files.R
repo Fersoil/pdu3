@@ -4,7 +4,6 @@
 #
 #
 #libki
-install.packages("stringi")
 
 library(stringi)
 library(data.table)
@@ -22,12 +21,11 @@ load_data <- function(){
   
   sufix <- "-citibike-tripdata.csv"
   
-  data_set_dates <- c("201901", "201801", "201701")
-  data_set_cities <- c("", "", "", "JC-")
+  data_set_dates <- c("201901")
+  data_set_cities <- c("JC-")
+  
   
   data_set_names <- paste(data_set_cities, data_set_dates, sep="")
-  
-  tempdir?
   
   for(el in data_set_names){
     path <- paste(page_prefix, el, sufix, ".zip", sep = "")
@@ -42,9 +40,6 @@ load_data <- function(){
 load_data()
 
 
-# dupa
-
-
 temp <- tempfile()
 download.file(path, temp)
 
@@ -53,4 +48,5 @@ path <- "201901-citibike-tripdata.csv"
 set <- read.csv(unz(temp, "201901-citibike-tripdata.csv"))
 unlink(temp)
 getwd()
+
 
