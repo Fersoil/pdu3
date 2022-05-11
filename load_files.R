@@ -41,6 +41,10 @@ load_data <- function(){
 
 load_data()
 
+
+# dupa
+
+
 temp <- tempfile()
 download.file(path, temp)
 
