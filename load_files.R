@@ -1,8 +1,4 @@
 # Pocz?tkowo wczytamy sobie troche danych
-# 
-# 
-#
-#
 #libki
 
 library(stringi)

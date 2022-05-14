@@ -20,6 +20,6 @@ for(el in data_set_dates){
   unlink(temp)
 }
 
-filenames <- paste("jc", data_set_dates, sep="")
+data_names <- paste("jc", data_set_dates, sep="")
 
 
