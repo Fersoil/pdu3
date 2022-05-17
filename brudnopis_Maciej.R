@@ -27,10 +27,12 @@ x <- as.data.table(data)[, .(
     Season, TypeOfTrip, AverageCount = Count/3)]
 
 
-generate_plot <- function(DataFrame) {
+generate_column_plot <- function(DataFrame) {
   
-  ggplot(data = DataFrame, aes(Season, AverageCount)) + geom_bar(stat = "identity", position = "dodge", aes(fill=TypeOfTrip)) +
-    labs(x = "Season", y="AverageCount") + scale_x_discrete(limits = c("Spring", "Summer", "Autumn", "Winter"))
+  ggplot(data = DataFrame, aes(Season, AverageCount)) + 
+    geom_bar(stat = "identity", position = "dodge", aes(fill=TypeOfTrip)) +
+    labs(x = "Season", y="AverageCount") + 
+    scale_x_discrete(limits = c("Spring", "Summer", "Autumn", "Winter"))
   
 }
 
@@ -42,24 +44,40 @@ undefined <- generate_plot(x)
 plot_grid(allgenders, men, women, undefined, labels = c("All genders", "Men", "Women", "Undefined"))
 
 
+# ------------------------------------------------------------------------------
 
-# x07 <- as.data.table(`201907`)[,
-#   .(Gender = fcase( 
-#     gender == 1, "Men",
-#     gender == 2, "Women",
-#     gender == 0, "Undefined"
-#    ), TypeOfTrip = fcase(
-#       tripduration <= 600, "short",
-#       tripduration > 600 & tripduration <= 1800, "medium",
-#       default = "long"
-#    ))][, .(Count = .N), .(Gender, TypeOfTrip)][, .(
-#   ShortTrips = max(fcase(
-#     TypeOfTrip == 'short', Count,
-#     default = 0L)),
-#   MediumTrips = max(fcase(
-#     TypeOfTrip == 'medium', Count,
-#     default = 0L)),
-#   LongTrips = max(fcase(
-#     TypeOfTrip == 'long', Count,
-#     default = 0L))
-#   ), Gender]
+
+x2 <- as.data.table(data)[,
+  .(gender, TypeOfTrip = fcase(
+     tripduration <= 480, "1-UltraShort",
+     tripduration > 480 & tripduration <= 900, "2-Short",
+     tripduration > 900 & tripduration <= 1800, "3-Medium",
+     tripduration > 1800 & tripduration <= 3600, "4-Long",
+     default = "5-UltraLong")
+   )][, .(Count = .N), .(gender, TypeOfTrip)][gender == 1, .(
+     TypeOfTrip, Count, Percent = round(Count/sum(Count) * 100, 1))]
+
+x2
+
+
+generate_pie_plot <- function(DataFrame) {
+  
+  ggplot(DataFrame, aes(x="", y=Count, fill=TypeOfTrip)) +
+    geom_bar(stat="identity", width=1, color="white") +
+    geom_label(aes(label = paste(Percent, "%", sep="")),
+               position = position_stack(vjust = 0.5, ),
+               show.legend = FALSE) +
+    coord_polar("y", start=0) + theme_void()
+}
+
+
+Men <- generate_pie_plot(x2)
+Women <- generate_pie_plot(x2)
+Undefined <- generate_pie_plot(x2)
+All <- generate_pie_plot(x2)
+
+
+All
+plot_grid(All, Men, Women, Undefined, labels = c("All genders", "Men", "Women", "Undefined"))
+
+
