@@ -2,6 +2,7 @@ library(shiny)
 library(leaflet)
 library(data.table)
 library(RColorBrewer)
+library(lubridate)
 
 
 update_data = F
@@ -12,7 +13,7 @@ if(update_data)
 r_colors <- rgb(t(col2rgb(colors()) / 255))
 names(r_colors) <- colors()
 
-
+colpal <- "stataat"
 
 ui <- fluidPage(
   titlePanel("Citi Bikes in New York"),
@@ -23,8 +24,22 @@ ui <- fluidPage(
                   label = "Choose departure or arrivals",
                   choices = c("in", "out"),
                   selected = "in"),
-      sliderInput("range", "Number of rents", min(in_stations$n), max(in_stations$n),
+      sliderInput("range", "Number of rents", min(in_stations$n), max(in_stations$n), #TODO
                   value = range(in_stations$n), step = 1),
+      dateRangeInput("date",
+                     label="choose beggining and ending of a span",
+                     format = "yyyy-mm-dd"),
+      sliderInput(
+        "test_input",
+        label = "Select time",
+        min = lubridate::origin,
+        max = lubridate::origin + days(1) - seconds(1),
+        value = c(lubridate::origin, lubridate::origin + days(1) - seconds(1)),
+        step = 5 * 60,
+        timeFormat = "%H:%M",
+        timezone = "+0000",
+        ticks = FALSE
+      ),
       selectInput("colors", "Color Scheme",
                   rownames(subset(brewer.pal.info, category %in% c("seq", "div")))
       ),
@@ -38,26 +53,25 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  stations_data <- reactive({
-    stations_data <- switch(input$in_out,
+  stations <- reactive({
+    stations <- switch(input$in_out,
                  "in" = in_stations,
                  "out" = out_stations)
   })
   
   filteredData <- reactive({
-    st = stations_data()
-    st[st$n >= input$range[1] & st$n <= input$range[2],]
-    st
+    st = stations()
+    st[n >= input$range[1] & n <= input$range[2], ,]
   })
   
   colorpal <- reactive({
-    colorNumeric(input$colors, stations_data()$n)
+    colorNumeric(input$colors, stations()$n)
   })
   
   
   
   output$mymap <- renderLeaflet({
-    st = stations_data()
+    st = stations()
     leaflet(st) %>% addTiles() %>%
       fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
 
@@ -68,22 +82,21 @@ server <- function(input, output, session) {
 
   observe({
     pal <- colorpal()
-    data = filteredData()
     
-    leafletProxy("mymap", data = data) %>%
-      clearShapes() %>%
-      addCircles(lng = ~lng, lat = ~lat,
+    leafletProxy("mymap", data = filteredData()) %>%
+      clearMarkers() %>%
+      addCircleMarkers(lng = ~lng, lat = ~lat,
                  weight = 1,
                        fillColor = ~pal(n),
                        color = "#777777",
                        popup = ~paste(n),
                        stroke = FALSE,
-                       radius = ~log(n)*100,
-                       fillOpacity = 0.8)
+                       radius = 5,
+                       fillOpacity = 0.9)
   })
   
   observe({
-    proxy <- leafletProxy("mymap", data = filteredData())
+    proxy <- leafletProxy("mymap", data = stations())
 
     # Remove any existing legend, and only if the legend is
     # enabled, create a new one.
