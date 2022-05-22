@@ -6,14 +6,16 @@ library(lubridate)
 
 
 update_data = F
-if(update_data)
-  source("helpers.R")
+date_interval <- 10
+  
+# source("helpers.R")
 
 
 r_colors <- rgb(t(col2rgb(colors()) / 255))
 names(r_colors) <- colors()
 
-colpal <- "stataat"
+color_pallete <- "RdYlBu"
+
 
 ui <- fluidPage(
   titlePanel("Citi Bikes in New York"),
@@ -23,14 +25,14 @@ ui <- fluidPage(
       selectInput("in_out",
                   label = "Choose departure or arrivals",
                   choices = c("in", "out"),
-                  selected = "in"),
-      sliderInput("range", "Number of rents", min(in_stations$n), max(in_stations$n), #TODO
-                  value = range(in_stations$n), step = 1),
+                  selected = "out"),
+      sliderInput("range", "Number of rents", min(pre_stat$n), max(pre_stat$n), #TODO
+                  value = range(pre_stat$n), step = 1),
       dateRangeInput("date",
                      label="choose beggining and ending of a span",
-                     format = "yyyy-mm-dd"),
+                     format = "yyyy-mm-dd", start="2019-01-01", end="2019-12-31"),
       sliderInput(
-        "test_input",
+        "time_input",
         label = "Select time",
         min = lubridate::origin,
         max = lubridate::origin + days(1) - seconds(1),
@@ -40,13 +42,15 @@ ui <- fluidPage(
         timezone = "+0000",
         ticks = FALSE
       ),
-      selectInput("colors", "Color Scheme",
-                  rownames(subset(brewer.pal.info, category %in% c("seq", "div")))
-      ),
+      # , zakomentowane wybieranie koloru
+      # selectInput("colors", "Color Scheme",
+      #            rownames(subset(brewer.pal.info, category %in% c("seq", "div")))
+      #),
       checkboxInput("legend", "Show legend", TRUE)
     ),
     mainPanel(
-      leafletOutput("mymap")
+      leafletOutput("mymap"),
+      leafletOutput("heatMap")
     )
     
   )
@@ -59,15 +63,35 @@ server <- function(input, output, session) {
                  "out" = out_stations)
   })
   
+  allDatedStations <- reactive({
+    datedData()[, .(n = .N), by=.(lat, lng, name)]
+  })
+  
+  datedData <- reactive({
+     print(input$date)
+     date_interval <- interval(input$date[1], input$date[2])
+     
+     print(date_interval)
+     st = stations()
+     print(head(st$date))
+     st[date %within% date_interval, ]
+  })
+  
+  timedData <- reactive({
+    st = datedData()
+    st[between(time, as.ITime(input$time_input[1]), as.ITime(input$time_input[2]))
+               ][, .(n = .N), by=.(lat, lng, name)]
+  })
+  
   filteredData <- reactive({
-    st = stations()
+    st = timedData()
+    timedData()
     st[n >= input$range[1] & n <= input$range[2], ,]
   })
   
   colorpal <- reactive({
-    colorNumeric(input$colors, stations()$n)
+     colorNumeric(color_pallete, allDatedStations()$n)
   })
-  
   
   
   output$mymap <- renderLeaflet({
@@ -76,8 +100,6 @@ server <- function(input, output, session) {
       fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
 
   })
-  
-  
 
 
   observe({
@@ -86,17 +108,19 @@ server <- function(input, output, session) {
     leafletProxy("mymap", data = filteredData()) %>%
       clearMarkers() %>%
       addCircleMarkers(lng = ~lng, lat = ~lat,
-                 weight = 1,
-                       fillColor = ~pal(n),
-                       color = "#777777",
-                       popup = ~paste(n),
-                       stroke = FALSE,
-                       radius = 5,
-                       fillOpacity = 0.9)
+                  weight = 1,
+                  fillColor = ~pal(n),
+                  color = "#777777",
+                  popup = ~paste(n),
+                  stroke = FALSE,
+                  radius = 5,
+                  label = ~name,
+                  fillOpacity = 0.9
+                 )
   })
   
   observe({
-    proxy <- leafletProxy("mymap", data = stations())
+    proxy <- leafletProxy("mymap", data = allDatedStations())
 
     # Remove any existing legend, and only if the legend is
     # enabled, create a new one.

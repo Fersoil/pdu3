@@ -2,6 +2,7 @@ library(leaflet)
 library(dplyr)
 library(stringi)
 library(data.table)
+library(lubridate)
 options(stringsAsFactors = FALSE)
 
 download_data = FALSE
@@ -48,14 +49,50 @@ download_data = FALSE
   data <- as.data.table(data)
   
   
-  out_stations <- data[, .(lat = start.station.latitude, lng = start.station.longitude, 
-                        name = start.station.name)][, .(n = .N), by=.(lat, lng, name)]
+  # time <- data[1, .(starttime)]
+  # time <- time[[1]]
+  # time <- as.POSIXct(time,format="%Y-%m-%d %H:%M:%S")
+  # format(time, "%H:%M")
+  # hm(hours = hour(time), min = minute(time))
   
-  in_stations <- data[, .(lat = end.station.latitude, lng = end.station.longitude, 
-                           name = end.station.name)][, .(n = .N), by=.(lat, lng, name)]
+  
+  # proccess the dates
+  # let us firstly ignore different dates
+  nch <- nchar("2019-12-01 00:07:13.9360") # to avoid unnecesary computations
+  
+  data <- data[, .(s_lat = start.station.latitude, s_lng = start.station.longitude, 
+                   s_name = start.station.name, e_lat = end.station.latitude, 
+                   e_lng = end.station.longitude, e_name = end.station.name, 
+                   s_date = as.Date(starttime),#, format="%Y-%m-%d %H:%M:%S"), 
+                   e_date = as.Date(stoptime),#, format="%Y-%m-%d %H:%M:%S"), 
+                   # e_date = fast_strptime(substr(stoptime, 1, nch - 5), 
+                   #                        format="%Y-%m-%d %H:%M:%S"), lt = FALSE), this may be faster
+                  s_time = as.ITime(starttime),
+                  e_time = as.ITime(stoptime))
+               ]#[, .(s_lat, s_lng, s_name, e_lat, e_lng, e_name, s_dtime, e_dtime, 
+                #     s_date = date(s_dtime), e_date = date(e_dtime), 
+                #     s_time = as.ITime(s_dtime), e_time = as.ITime(e_dtime))
+               #]
+  
+  
+  
+  out_stations <- data[, .(lat = s_lat, lng = s_lng, name = s_name, 
+                           date = s_date, time = s_time)
+                      ]#[, .(n = .N), by=.(lat, lng, name)]
+  
+  in_stations <- data[, .(lat = e_lat, lng = e_lng, name = e_name, 
+                          date = s_date, time = e_time)
+                    ]#[, .(n = .N), by=.(lat, lng, name)]
+  
+  
+  
+  
+
   
   in_stations <- as.data.table(in_stations)
   out_stations <- as.data.table(out_stations)
+  
+  pre_stat <- in_stations[, .(n = .N), by=.(lat, lng, name)]
 
 #########
 
