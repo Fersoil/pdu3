@@ -90,7 +90,7 @@ server <- function(input, output, session) {
   })
   
   colorpal <- reactive({
-     colorNumeric(color_pallete, allDatedStations()$n)
+     colorNumeric(color_pallete, filteredData()$n)
   })
   
   
@@ -120,7 +120,7 @@ server <- function(input, output, session) {
   })
   
   observe({
-    proxy <- leafletProxy("mymap", data = allDatedStations())
+    proxy <- leafletProxy("mymap", data = filteredData())
 
     # Remove any existing legend, and only if the legend is
     # enabled, create a new one.

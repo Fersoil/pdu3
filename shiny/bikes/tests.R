@@ -3,7 +3,7 @@ date1 <- ymd("2019-01-04 UTC")
 date2 <- ymd("2019-05-04 UTC")
 date_interval <- interval(date1, date2)
 
-
+# zabawy z czasem
 print(head(out_stations$date))
 out_stations[date %within% date_interval, ][, .(n = .N), by=.(lat, lng, name)]
 
@@ -27,3 +27,6 @@ in_stations[between(time, as.ITime('06:00:00'), as.ITime('09:00:00'))]
 head(out_stations[time %within% time_interval, ])
 
 as.POSIXct("1970-01-01 10:00:00")
+
+
+
