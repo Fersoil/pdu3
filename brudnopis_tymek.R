@@ -3,7 +3,7 @@
 # W tym celu wczytajmy najpierw dane
 
 
-source("load_files_jc2019.R")
+source("better_load_files.R")
 library(data.table)
 library(ggplot2)
 

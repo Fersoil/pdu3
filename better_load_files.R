@@ -5,7 +5,7 @@ library(data.table)
 options(stringsAsFactors = FALSE)
 
 # parametr ktory opisuje czy chcemy pobierac pliki
-download_data = TRUE
+download_data = FALSE
 
 # przygotowujemy sie do odpowiedniego nazywania i pobierania danych
 page_prefix <- "https://s3.amazonaws.com/tripdata/"
@@ -14,6 +14,7 @@ dest_dir <- "data/"
 
 
 i <- sapply(as.character(1:12), FUN = function(x) {ifelse(nchar(x) == 1, paste("0",x, sep=""), x)})
+data_set_dates <- paste("2019", i, sep="")
 
 # w tym przypadku pobieramy dane dla new jersey - dla nowego jorku nalezy odpowiednio
 # zmodyfikowac wszystkie paste
