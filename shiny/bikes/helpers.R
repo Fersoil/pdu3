@@ -2,7 +2,15 @@ library(leaflet)
 library(dplyr)
 library(stringi)
 library(data.table)
+library(shiny)
+library(leaflet.extras)
+library(RColorBrewer)
 library(lubridate)
+library(sf)
+library(httr)
+library(maptools)
+library(rgdal)
+
 options(stringsAsFactors = FALSE)
 
 download_data = FALSE
@@ -14,7 +22,7 @@ sufix <- "-citibike-tripdata.csv"
 dest_dir <- "data/"
 
 
-i <- sapply(as.character(1:12), FUN = function(x) {ifelse(nchar(x) == 1, paste("0",x, sep=""), x)})
+i <- sapply(as.character(1:3), FUN = function(x) {ifelse(nchar(x) == 1, paste("0",x, sep=""), x)})
 
 data_set_dates <- paste("2019", i, sep="")
 
@@ -81,6 +89,8 @@ data <- data[, .(s_lat = start.station.latitude, s_lng = start.station.longitude
 
 
 
+
+
 out_stations <- data[, .(lat = s_lat, lng = s_lng, name = s_name, 
                          date = s_date, time = s_time)
                     ]#[, .(n = .N), by=.(lat, lng, name)]
@@ -91,13 +101,18 @@ in_stations <- data[, .(lat = e_lat, lng = e_lng, name = e_name,
 
 
 
-
-
-
 in_stations <- as.data.table(in_stations)
 out_stations <- as.data.table(out_stations)
 
 pre_stat <- in_stations[, .(n = .N), by=.(lat, lng, name)]
+
+# here is some code to process maps
+
+#get the polygons
+r <- GET('https://data.beta.nyc/dataset/0ff93d2d-90ba-457c-9f7e-39e47bf2ac5f/resource/35dd04fb-81b3-479b-a074-a27a37888ce7/download/d085e2f8d0b54d4590b1e7d1f35594c1pediacitiesnycneighborhoods.geojson')
+nyc_neighborhoods <- readOGR(content(r,'text'), 'OGRGeoJSON', verbose = F)
+
+nyc_polygons <- st_as_sf(nyc_neighborhoods)
 
 #########
 
