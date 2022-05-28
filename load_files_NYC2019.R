@@ -17,6 +17,11 @@ for(el in data_set_dates){
   unlink(temp)
 }
 
-data_names <- paste("NYC", data_set_dates, sep="")
+data <- data.table()
 
+for(el in paste("NYC", data_set_dates, sep="")){
+  data <- rbind(eval(parse(text = el)), data)
+}
+
+data <- as.data.table(data)
 
