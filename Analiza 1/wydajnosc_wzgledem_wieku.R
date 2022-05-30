@@ -3,6 +3,8 @@ library(data.table)
 library(ggplot2)
 library(plotly)
 
+options(scipen=5)
+
 this_year <- 2019
 
 # function as its name suggests calculates the distance between two points
@@ -80,7 +82,7 @@ ggplot(data = data_to_plot, aes(x = age, y = avg_speed, group = gender)) +
   labs(title = "Average speed by gender")-> plot1
 plot1
 fig1 <- ggplotly(plot1) %>%
-  layout(yaxis = list(title = "average speed in km/h"))
+  layout(yaxis = list(title = "average speed in km/h"), showlegend = TRUE)
 
 ggplot(data = data_to_plot, aes(x = age, y = avg_dist, group = gender)) +
   geom_line(aes(colour = gender)) +
@@ -90,7 +92,7 @@ ggplot(data = data_to_plot, aes(x = age, y = avg_dist, group = gender)) +
   labs(title = "Average distance by gender")-> plot2
 plot2
 fig2 <- ggplotly(plot2) %>%
-  layout(yaxis = list(title = "average distance in m"))
+  layout(yaxis = list(title = "average distance in m"), showlegend = FALSE)
 
 ggplot(data = data_to_plot, aes(x = age, y = rides, group = gender)) +
   geom_line(aes(colour = gender)) +
@@ -100,7 +102,7 @@ ggplot(data = data_to_plot, aes(x = age, y = rides, group = gender)) +
   labs(title = "Number of riders")-> plot3
 plot3
 fig3 <- ggplotly(plot3) %>%
-  layout(yaxis = list(title = "number of rides"))
+  layout(yaxis = list(title = "number of rides"), showlegend = FALSE)
 
 ggplot(data = data_to_plot, aes(x = age, y = total_dist, group = gender)) +
   geom_line(aes(colour = gender)) +
@@ -110,11 +112,13 @@ ggplot(data = data_to_plot, aes(x = age, y = total_dist, group = gender)) +
   labs(title = "Number of riders")-> plot4
 plot4
 fig4 <- ggplotly(plot4) %>%
-  layout(yaxis = list(title = "total distance"))
+  layout(yaxis = list(title = "total distance"), showlegend = FALSE)
 
 fig <- subplot(fig1, fig2, fig3, fig4, nrows = 2, shareX = TRUE, 
                titleY = TRUE, titleX = TRUE, margin = 0.1) %>%
   layout(title = "Average speed, distance and number of rides by age and gender",
-         zerolinewidth = 2)
+         zerolinewidth = 2) 
+  
+  
 
 fig

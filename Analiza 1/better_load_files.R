@@ -6,7 +6,7 @@ options(stringsAsFactors = FALSE)
 getwd()
 
 # parametr ktory opisuje czy chcemy pobierac pliki
-download_data = TRUE
+download_data = FALSE
 
 # przygotowujemy sie do odpowiedniego nazywania i pobierania danych
 page_prefix <- "https://s3.amazonaws.com/tripdata/"

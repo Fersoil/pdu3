@@ -16,7 +16,7 @@ getwd()
 update_data = F
 date_interval <- 10
   
-source("helpers.R")
+# source("helpers.R")
 
 #tidygeocoder
 
@@ -197,7 +197,8 @@ server <- function(input, output, session) {
                     labelOptions = labelOptions(
                       style = list("font-weight" = "normal", padding = "3px 8px"),
                       textsize = "15px",
-                      direction = "auto")) 
+                      direction = "auto")) %>%
+        setView(lat = new_york_cords[2], lng = new_york_cords[1], zoom=12)
     }
     
     return(map)
