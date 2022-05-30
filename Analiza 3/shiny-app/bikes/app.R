@@ -16,11 +16,9 @@ getwd()
 update_data = F
 date_interval <- 10
   
-# source("helpers.R")
+source("helpers.R")
 
 #tidygeocoder
-
-
 
 r_colors <- rgb(t(col2rgb(colors()) / 255))
 names(r_colors) <- colors()
@@ -32,7 +30,6 @@ tile_color_pallete <- "YlOrRd"
 ui <- fluidPage(
   titlePanel("Citi Bikes in New York"),
   sidebarLayout(
-    
     sidebarPanel(
       selectInput("in_out",
                   label = "Choose departure or arrivals",
@@ -54,10 +51,6 @@ ui <- fluidPage(
         timezone = "+0000",
         ticks = FALSE
       ),
-      # , zakomentowane wybieranie koloru
-      # selectInput("colors", "Color Scheme",
-      #            rownames(subset(brewer.pal.info, category %in% c("seq", "div")))
-      #),
       checkboxInput("legend", "Show legend", FALSE),
       selectInput("maptype",
                   label = "Choose map type",
@@ -68,44 +61,39 @@ ui <- fluidPage(
       leafletOutput("mymap",
                     width = "100%", height = 700)
     )
-    
   )
 )
 
 server <- function(input, output, session) {
-  stations <- reactive({
+  
+  ## functions below create a pipeline of filtering data - passing through all posiible inputs
+  ## starting from the one requring most computations
+  
+  stations <- reactive({ # function handles in out input - deciding whether we want to show arrivals or departures from stations
     stations <- switch(input$in_out,
                  "in" = in_stations,
                  "out" = out_stations)
   })
   
-  allDatedStations <- reactive({
-    datedData()[, .(n = .N), by=.(lat, lng, name)]
-  })
-  
-  datedData <- reactive({
+  datedData <- reactive({ # function handles data filtering 
      print(input$date)
      date_interval <- interval(input$date[1], input$date[2])
-     
-     print(date_interval)
      st = stations()
-     print(head(st$date))
-     st[date %within% date_interval, ]
+     st[date %within% date_interval, ] # returns information about rents in within a specified range of time
   })
   
-  timedData <- reactive({
-    st = datedData()
+  timedData <- reactive({ # function handles time filtering
+    st = datedData() # 
     st[between(time, as.ITime(input$time_input[1]), as.ITime(input$time_input[2]))
                ][, .(n = .N), by=.(lat, lng, name)]
   })
   
-  filteredData <- reactive({
+  filteredData <- reactive({ # filtering number of rents - it allows us to filter some stations
     st = timedData()
-    timedData()
     st[n >= input$range[1] & n <= input$range[2], ,]
   })
   
-  points <- reactive({
+  points <- reactive({ # in order to create chloroplet map, we need to prepare stations as sf class object
     st <- filteredData()
     coords <- st[, .(lng, lat)]
     points <- SpatialPointsDataFrame(coords, data = st)
@@ -116,17 +104,18 @@ server <- function(input, output, session) {
   })
   
   summarized_polygons <- reactive({ # function joins stations with polygons that describe nyc neighborhoods
+    # it uses previously prepared points and polygons - all of sf class
     points <- points()
     joined_polygons <- st_join(nyc_polygons, points, left=FALSE)
     joined_polygons <- as.data.table(joined_polygons)
     joined_polygons <- joined_polygons[, .(neighborhood, boroughCode, borough, n, geometry)]
     
-    joined_polygons <- joined_polygons[, .(sum=sum(n)), by=.(neighborhood, boroughCode, borough)]
+    joined_polygons <- joined_polygons[, .(sum=sum(n), num_of_stat=.N), by=.(neighborhood, boroughCode, borough)]
     joined_polygons <- merge(joined_polygons, nyc_polygons)
     
     polygons <- st_as_sf(joined_polygons)
     polygons$area <- st_area(polygons)
-    polygons$avg <- polygons$sum / polygons$area
+    polygons$avg <- polygons$sum / polygons$area # calculating average rents
 
     
     polygons
@@ -135,22 +124,22 @@ server <- function(input, output, session) {
   polygon_labels <- reactive({ # functions adds labels to polygon dataframe
     polygons <- summarized_polygons()
     labels <- sprintf(
-      "<strong>%s</strong><br/>%g rents / m<sup>2</sup>",
-      polygons$neighborhood, polygons$avg
+      "<strong>%s</strong><br/>%g rents",
+      polygons$neighborhood, polygons$sum
     ) %>% lapply(htmltools::HTML)
     
     labels
   })
   
   tilecolorpal <- reactive({
-    pal <- colorBin(tile_color_pallete, domain = summarized_polygons()$avg, bins = 5)
+    pal <- colorBin(tile_color_pallete, domain = summarized_polygons()$sum, bins = 5)
   })
   
   colorpal <- reactive({
      colorNumeric(color_pallete, filteredData()$n)
   })
   
-  output$mymap <- renderLeaflet({
+  output$mymap <- renderLeaflet({ # preparing leaflet map to reactive operations
     st = stations()
     leaflet(st) %>% addTiles() %>%
       fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat)) %>%
@@ -158,11 +147,13 @@ server <- function(input, output, session) {
   })
   
   observe({
-    pal <- colorpal()
-    tile_pal <- tilecolorpal()
+    pal <- colorpal() #choosing palettes
+    tile_pal <- tilecolorpal() 
     
-    map <- leafletProxy("mymap", data = filteredData()) %>%
-      clearMarkers()
+    map <- leafletProxy("mymap", data = filteredData()) %>% # cleaning the map
+      clearMarkers() %>% 
+      clearHeatmap() %>%
+      clearShapes()
 
     if(input$maptype == "markers"){
       map <- map %>%
@@ -186,9 +177,11 @@ server <- function(input, output, session) {
       polygon <- summarized_polygons()
       labels <- polygon_labels()
       
-      map <- leafletProxy("mymap", data = polygon) %>%
-        clearMarkers() %>%
-        addPolygons(fillColor = ~tile_pal(avg),
+      map <- leafletProxy("mymap", data = polygon) %>% # cleaning the map again
+        clearMarkers() %>% 
+        clearHeatmap() %>%
+        clearShapes() %>%
+        addPolygons(fillColor = ~tile_pal(sum),
                     weight = 2,
                     opacity = 1,
                     color = "black",
@@ -204,35 +197,35 @@ server <- function(input, output, session) {
                     labelOptions = labelOptions(
                       style = list("font-weight" = "normal", padding = "3px 8px"),
                       textsize = "15px",
-                      direction = "auto")) %>%
-        addProviderTiles("CartoDB.Positron") 
+                      direction = "auto")) 
     }
     
     return(map)
   })
   
   observe({
-    proxy <- leafletProxy("mymap", data = filteredData())
-
-    # Remove any existing legend, and only if the legend is
-    # enabled, create a new one.
-    proxy %>% clearControls()
-    if (input$legend) {
-      pal <- colorpal()
-      proxy %>% addLegend(position = "bottomright",
-                          pal = pal, values = ~n
-      )
-    }
+    
+    
     if(input$maptype == "tiles") {
       proxy <- leafletProxy("mymap", data=summarized_polygons())
       proxy %>% clearControls()
       tile_pal <- tilecolorpal()
       
       proxy %>% addLegend(position = "bottomright",
-                          pal = tile_pal, values = ~avg,
-                          opacity = 0.7, title = "rents per square meter"
+                          pal = tile_pal, values = ~sum,
+                          opacity = 0.7, title = "number of rents"
       )
     }
+    else {
+      proxy <- leafletProxy("mymap", data=filteredData())
+      proxy %>% clearControls()
+      pal <- colorpal()
+      proxy %>% addLegend(position = "bottomright",
+                            pal = pal, values = ~n,
+                          title = "number of rents"
+      )
+    }
+    
   })
   
 }

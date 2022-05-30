@@ -1,0 +1,14 @@
+name: bikes
+title: bikes
+username:
+account: fersoil
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6389113
+bundleId: 5957899
+url: https://fersoil.shinyapps.io/bikes/
+when: 1653865073.74851
+lastSyncTime: 1653865073.74852
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: data/nc201905-citibike-tripdata.csv.zip|data/nc201906-citibike-tripdata.csv.zip|plots.R|tests.R

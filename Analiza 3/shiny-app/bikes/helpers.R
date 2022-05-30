@@ -22,7 +22,7 @@ sufix <- "-citibike-tripdata.csv"
 dest_dir <- "data/"
 
 
-i <- sapply(as.character(1:3), FUN = function(x) {ifelse(nchar(x) == 1, paste("0",x, sep=""), x)})
+i <- sapply(as.character(4:4), FUN = function(x) {ifelse(nchar(x) == 1, paste("0",x, sep=""), x)})
 
 data_set_dates <- paste("2019", i, sep="")
 
@@ -35,6 +35,7 @@ for(el in data_set_dates){
     url_path <- paste(page_prefix, el, sufix, ".zip", sep = "")
     download.file(url_path, dest_path)
     print(paste("succesfully downloaded data at", dest_path))
+    
   }
   
   # updateujemy dane

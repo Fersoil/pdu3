@@ -5,8 +5,8 @@ library(plotly)
 
 this_year <- 2019
 
-
-dist <- function(lat1, lon1, lat2, lon2) {
+# function as its name suggests calculates the distance between two points
+dist <- function(lat1, lon1, lat2, lon2) { 
   lat1 <- lat1 * pi / 180
   lat2 <- lat2 * pi / 180
   lon1 <- lon1 * pi / 180
@@ -53,7 +53,7 @@ d <- data[, .(age = age(birth.year), tripduration,
               ][gender != "unknown", ]
 
 # i uknown gender tez sie pozbywamy bo nie wiadomo co to
-# nie bedziemy rozwazac takich dziwnych przypadkow jak wiek wiekszy od 80 lat, bo raczej tacy ludzie nie żyją
+# nie bedziemy rozwazac takich dziwnych przypadkow jak wiek wiekszy od 70 lat, bo raczej tacy ludzie nie żyją
 
 # agregujemy 
 
@@ -62,7 +62,7 @@ d <- data[, .(age = age(birth.year), tripduration,
 # male_data <- d[gender == "male", .(mal_avg_speed = mean(speed), mal_avg_dist = mean(dist)), 
 #                by = .(age)]
 
-data_to_plot <- d[, .(avg_speed = mean(speed), avg_dist = mean(dist), rides = .N), 
+data_to_plot <- d[, .(total_dist = sum(dist), avg_speed = mean(speed), avg_dist = mean(dist), rides = .N), 
                                 by = .(age, gender)]
 
 head(data_to_plot)
@@ -70,12 +70,13 @@ head(data_to_plot)
 
 data_to_plot[, .(avg = mean(avg_speed)), by = .(gender)]
 
+col_val = c("#F8931D", "#9C6A6A")
 
 ggplot(data = data_to_plot, aes(x = age, y = avg_speed, group = gender)) +
   geom_line(aes(colour = gender)) +
   ylab("Average speed in km/h") + 
   xlab("User age") +
-  scale_color_manual(values=c('Red','Blue')) +
+  scale_color_manual(values=col_val) +
   labs(title = "Average speed by gender")-> plot1
 plot1
 fig1 <- ggplotly(plot1) %>%
@@ -85,7 +86,7 @@ ggplot(data = data_to_plot, aes(x = age, y = avg_dist, group = gender)) +
   geom_line(aes(colour = gender)) +
   ylab("Average speed in m") + 
   xlab("User age") +
-  scale_color_manual(values=c('Red','Blue')) +
+  scale_color_manual(values=col_val) +
   labs(title = "Average distance by gender")-> plot2
 plot2
 fig2 <- ggplotly(plot2) %>%
@@ -95,13 +96,23 @@ ggplot(data = data_to_plot, aes(x = age, y = rides, group = gender)) +
   geom_line(aes(colour = gender)) +
   ylab("number of rides") + 
   xlab("User age") +
-  scale_color_manual(values=c('Red','Blue')) +
+  scale_color_manual(values=col_val) +
   labs(title = "Number of riders")-> plot3
 plot3
 fig3 <- ggplotly(plot3) %>%
   layout(yaxis = list(title = "number of rides"))
 
-fig <- subplot(fig1, fig2, fig3, nrows = 3, shareX = TRUE, 
+ggplot(data = data_to_plot, aes(x = age, y = total_dist, group = gender)) +
+  geom_line(aes(colour = gender)) +
+  ylab("number of rides") + 
+  xlab("User age") +
+  scale_color_manual(values=col_val) +
+  labs(title = "Number of riders")-> plot4
+plot4
+fig4 <- ggplotly(plot4) %>%
+  layout(yaxis = list(title = "total distance"))
+
+fig <- subplot(fig1, fig2, fig3, fig4, nrows = 2, shareX = TRUE, 
                titleY = TRUE, titleX = TRUE, margin = 0.1) %>%
   layout(title = "Average speed, distance and number of rides by age and gender",
          zerolinewidth = 2)
