@@ -6,7 +6,7 @@ library(cowplot)
 # funkcje pomocnicze
 
 # przypisanie rodzaju podróży w zależności od jej trwania
-devide_trip_duration <- function(tripduration) {
+assign_trip_duration <- function(tripduration) {
   fcase(
     tripduration <= 480, "1-UltraShort",
     tripduration > 480 & tripduration <= 900, "2-Short",
@@ -16,7 +16,7 @@ devide_trip_duration <- function(tripduration) {
 }
 
 # przypisanie pory roku w zależności od miesiąca
-devide_seasons <- function(starttime) {
+assign_seasons <- function(starttime) {
   fcase(
     stri_sub(starttime, 6, 7) == "01" | stri_sub(starttime, 6, 7) == "02" | 
       stri_sub(starttime, 6, 7) == "12", "Winter",
@@ -33,8 +33,8 @@ devide_seasons <- function(starttime) {
 generate_data <- function(season) {
   
   data[, .(
-    TypeOfTrip = devide_trip_duration(tripduration),
-    Season = devide_seasons(starttime)
+    TypeOfTrip = assign_trip_duration(tripduration),
+    Season = assign_seasons(starttime)
   )][, .(Count = .N), .(Season, TypeOfTrip)][Season == season,.(
     TypeOfTrip, Count, Percent = round(Count/sum(Count) * 100, 1))]
   
@@ -64,14 +64,14 @@ generate_data_2 <- function(Gender="All") {
   
   if(Gender=="All") {
     
-    x <- data[, .(TypeOfTrip = devide_trip_duration(tripduration)
+    x <- data[, .(TypeOfTrip = assign_trip_duration(tripduration)
     )][, .(Count = .N), .(TypeOfTrip)][, .(
       TypeOfTrip, Count, Percent = round(Count/sum(Count) * 100, 1))]
     
   }
   else{
     
-    x <- data[, .(gender, TypeOfTrip = devide_trip_duration(tripduration)
+    x <- data[, .(gender, TypeOfTrip = assign_trip_duration(tripduration)
     )][, .(Count = .N), .(gender, TypeOfTrip)][gender == Gender, .(
       TypeOfTrip, Count, Percent = round(Count/sum(Count) * 100, 1))]
     
@@ -97,8 +97,8 @@ generate_data_3 <- function(Gender = "All") {
   if(Gender!="All") {x <- x[gender == Gender]}
 
   x[, .(
-    TypeOfTrip = devide_trip_duration(tripduration),
-    Season = devide_seasons(starttime)
+    TypeOfTrip = assign_trip_duration(tripduration),
+    Season = assign_seasons(starttime)
   )][, .(Count = .N), .(Season, TypeOfTrip)][,.(
     Season, TypeOfTrip, AverageCount = Count/3)]
   
@@ -120,8 +120,4 @@ plot3 <- plot_grid(generate_column_plot(generate_data_3()),
                   labels = c("All genders", "Men", "Women", "Undefined"))
 
 plot3
-
-
-
-
 
