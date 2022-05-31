@@ -172,3 +172,4 @@ fig <- subplot(fig1, fig2, nrows = 1,
   layout(title = "Liczba odjazdów oraz przyjazdów do dzielnic",
          zerolinewidth = 2)
 
+fig
