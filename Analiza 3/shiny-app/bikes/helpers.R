@@ -13,15 +13,15 @@ library(rgdal)
 
 options(stringsAsFactors = FALSE)
 
-download_data = FALSE
-
+download_data = TRUE # jezeli chcemy pobrac ramki pozostawic TRUE,
+# jezeli dane zostaly juz pobrane i zapisane w folderze data - lepiej ustawic FALSE
 
 
 page_prefix <- "https://s3.amazonaws.com/tripdata/"
 sufix <- "-citibike-tripdata.csv"
-dest_dir <- "data/"
+dest_dir <- "data/" 
 
-
+# 4:6 - miesiace z ktorych korzystamy
 i <- sapply(as.character(4:6), FUN = function(x) {ifelse(nchar(x) == 1, paste("0",x, sep=""), x)})
 
 data_set_dates <- paste("2019", i, sep="")
@@ -51,8 +51,6 @@ for(el in data_set_dates){
 new_york_cords = c(-74.035242, 40.730610)
 
 
-
-
 data_names <- paste("NC", data_set_dates, sep="")
 data <- data.table()
 
@@ -72,7 +70,7 @@ data <- as.data.table(data)
 
 # proccess the dates
 # let us firstly ignore different dates
-nch <- nchar("2019-12-01 00:07:13.9360") # to avoid unnecesary computations
+# nch <- nchar("2019-12-01 00:07:13.9360") # to avoid unnecesary computations
 
 data <- data[, .(s_lat = start.station.latitude, s_lng = start.station.longitude, 
                  s_name = start.station.name, e_lat = end.station.latitude, 
@@ -90,6 +88,7 @@ data <- data[, .(s_lat = start.station.latitude, s_lng = start.station.longitude
 
 # data <- data[s_name != "Grove St PATH", ]
 
+# zakomentowany kod jest poprawny lecz niekoniecznie lepszy - ten co jest dziala
 
 
 
@@ -111,27 +110,10 @@ pre_stat <- in_stations[, .(n = .N), by=.(lat, lng, name)]
 
 # here is some code to process maps
 
-#get the polygons
+#get the polygons from BetaNYC
 r <- GET('https://data.beta.nyc/dataset/0ff93d2d-90ba-457c-9f7e-39e47bf2ac5f/resource/35dd04fb-81b3-479b-a074-a27a37888ce7/download/d085e2f8d0b54d4590b1e7d1f35594c1pediacitiesnycneighborhoods.geojson')
 nyc_neighborhoods <- readOGR(content(r,'text'), 'OGRGeoJSON', verbose = F)
 
 nyc_polygons <- st_as_sf(nyc_neighborhoods)
 
 #########
-
-
-
-# ucsd.map <- get_map("UC San Diego",zoom=15)
-# 
-# ggmap::register_google(key = "iE3yD12i0xScfc1QZGkPifjLL_c=")
-# p <- get_map(location = c(lon = -95.3632715, lat = 29.7632836),
-#              zoom = "auto", scale = "auto", )
-# 
-# p + geom_point(aes(x = Longitude, y = Latitude,  colour = Initial.Type.Group), data = i2, size = 0.5) + 
-#   theme(legend.position="bottom")
-# ??get_map
-# ggmap(ucsd.map)
-# ??register_google
-# 
-# plot(getMap())
-# 
