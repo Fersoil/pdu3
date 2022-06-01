@@ -28,8 +28,6 @@ data_set_dates <- paste("2019", i, sep="")
 
 for(el in data_set_dates){
   # ustalamy sciezke docelową
-  print(dest_path)
-  print(getwd())
   dest_path <- paste(dest_dir, "nc", el, sufix, ".zip", sep="")
   
   if(download_data) { # pobieramy dane tylko jezeli jest taka potrzeba

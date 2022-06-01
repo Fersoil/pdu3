@@ -17,3 +17,5 @@ Hipoteza: czy na podstawie danych o wypożyczeniach rowerów jesteśmy w stanie 
 Odpowiedź: raczej tak.
 
 
+Jeżeli chodzi o ramki danych, w skryptach R są skrpty pomocnicze, które pobierają niezbędne dane.
+
